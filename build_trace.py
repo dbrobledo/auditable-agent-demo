@@ -230,6 +230,8 @@ page = f"""<!DOCTYPE html>
     Built on the pattern described in Anthropic&#x27;s
     <a href="https://www.anthropic.com/engineering/building-effective-agents">Building
     Effective Agents</a>.
+    Code, log, and build script:
+    <a href="https://github.com/dbrobledo/auditable-agent-demo">github.com/dbrobledo/auditable-agent-demo</a>.
   </footer>
 </main>
 </body>
