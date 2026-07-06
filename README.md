@@ -41,6 +41,17 @@ approval, or execution authority. That's the point.
 | `build_trace.py`  | Renders the log into `trace.html`, character-for-character                   |
 | `trace.html`      | The annotated trace — start here                                             |
 
+## Prerequisites
+
+- **Python 3.10+** — everything except the one advisory call is stdlib. No
+  framework, no infrastructure, nothing to `pip install`.
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code) installed and
+  authenticated**, with `claude` on PATH — used for exactly one call: the
+  narrative case-file summary. If it's missing, `agent.py` still runs to
+  completion and prints why the summary step was skipped; every guardrail,
+  routing, and ratification decision is a plain code branch and does not
+  depend on the model being available. That's the design, not a fallback.
+
 ## Run it yourself
 
 ```bash
@@ -48,9 +59,6 @@ python3 agent.py                            # triage the synthetic queue; agent 
 python3 ratify.py DSP-9002 approve --by "Your Name"   # record the human decision; execute
 python3 build_trace.py                      # regenerate trace.html from the fresh log
 ```
-
-Requires Python 3.10+ and, for the one advisory model call, the `claude`
-CLI on PATH. Everything else is stdlib — no framework, no infrastructure.
 
 ## What an engagement looks like
 

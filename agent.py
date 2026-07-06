@@ -106,10 +106,21 @@ def consult_model_for_summary(dispute: dict) -> str:
         "Do not recommend any action or resolution. Record: "
         + canonical(dispute)
     )
-    result = subprocess.run(
-        ["claude", "-p", "--model", MODEL_ID, prompt],
-        capture_output=True, text=True, timeout=300,
-    )
+    try:
+        result = subprocess.run(
+            ["claude", "-p", "--model", MODEL_ID, prompt],
+            capture_output=True, text=True, timeout=300,
+        )
+    except FileNotFoundError:
+        print(
+            "\n  [!] `claude` CLI not found on PATH — skipping the advisory "
+            "narrative summary.\n"
+            "      Install: https://docs.claude.com/en/docs/claude-code\n"
+            "      Note: routing, eligibility, and execution below are all "
+            "code-branch decisions and are unaffected by this — that's the "
+            "point of the guardrail design.\n"
+        )
+        return "(narrative summary skipped — claude CLI not installed)"
     if result.returncode != 0:
         raise RuntimeError(f"model call failed: {result.stderr.strip()}")
     return " ".join(result.stdout.split())
