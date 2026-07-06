@@ -97,33 +97,55 @@ def log(actor: str, event: str, ihash: str, decision: str, basis: str) -> dict:
 # ---- model consultation (narrative summary ONLY) ----------------------------
 
 
-def consult_model_for_summary(dispute: dict) -> str:
+def consult_model_for_summary(dispute: dict) -> tuple[bool, str]:
     """The single place the model is consulted. Advisory narrative only;
-    it cannot route, approve, or execute anything."""
+    it cannot route, approve, or execute anything.
+
+    Returns (recorded, text): recorded is True only if the model actually
+    produced a summary. When the model is unavailable, returns (False, reason)
+    and the caller logs SUMMARY_SKIPPED — the append-only log never claims a
+    summary was recorded when it was not."""
     prompt = (
         "You are summarizing a SYNTHETIC ACH dispute record for a case file. "
         "Write exactly one neutral, factual sentence summarizing the dispute. "
         "Do not recommend any action or resolution. Record: "
         + canonical(dispute)
     )
+    reason = None  # set to a short, human-readable cause if the call can't run
+
     try:
         result = subprocess.run(
             ["claude", "-p", "--model", MODEL_ID, prompt],
             capture_output=True, text=True, timeout=300,
         )
     except FileNotFoundError:
+        reason = ("`claude` CLI not found on PATH — "
+                  "install: https://docs.claude.com/en/docs/claude-code")
+    except subprocess.TimeoutExpired:
+        reason = "`claude` CLI timed out"
+    else:
+        if result.returncode != 0:
+            # Non-zero exit. The CLI writes some failures (e.g. "Not logged
+            # in · Please run /login") to stdout, not stderr, so check both.
+            detail = (result.stderr.strip() or result.stdout.strip()
+                      or f"exit {result.returncode}, no output")
+            reason = f"`claude` CLI call failed: {detail}"
+
+    if reason is not None:
+        # The advisory summary is the ONLY model call in this program, and it
+        # has no routing, approval, or execution authority. When it can't run,
+        # we skip it and continue — the guardrail, eligibility, and
+        # ratification decisions are all deterministic code and do not depend
+        # on the model being available. That independence is the design.
         print(
-            "\n  [!] `claude` CLI not found on PATH — skipping the advisory "
-            "narrative summary.\n"
-            "      Install: https://docs.claude.com/en/docs/claude-code\n"
-            "      Note: routing, eligibility, and execution below are all "
-            "code-branch decisions and are unaffected by this — that's the "
-            "point of the guardrail design.\n"
+            f"\n  [!] Advisory narrative summary skipped.\n"
+            f"      Reason: {reason}\n"
+            f"      This does not affect routing, eligibility, or execution — "
+            f"those are code-branch decisions. Demo continues.\n"
         )
-        return "(narrative summary skipped — claude CLI not installed)"
-    if result.returncode != 0:
-        raise RuntimeError(f"model call failed: {result.stderr.strip()}")
-    return " ".join(result.stdout.split())
+        return (False, f"summary skipped — model unavailable: {reason}")
+
+    return (True, " ".join(result.stdout.split()))
 
 
 # ---- triage ------------------------------------------------------------------
@@ -173,10 +195,16 @@ def triage(dispute: dict) -> None:
         f"{sorted(AUTO_ELIGIBLE_REASON_CODES)}; deterministic code branch")
 
     # Model consultation — narrative summary only, after all checks passed.
-    summary = consult_model_for_summary(dispute)
-    log("agent", "MODEL_CONSULT_SUMMARY", ihash, "SUMMARY_RECORDED",
-        f"advisory narrative only; model={MODEL_ID}; no routing or execution "
-        f"authority; output: {summary!r}")
+    recorded, summary = consult_model_for_summary(dispute)
+    if recorded:
+        log("agent", "MODEL_CONSULT_SUMMARY", ihash, "SUMMARY_RECORDED",
+            f"advisory narrative only; model={MODEL_ID}; no routing or execution "
+            f"authority; output: {summary!r}")
+    else:
+        log("agent", "MODEL_CONSULT_SUMMARY", ihash, "SUMMARY_SKIPPED",
+            f"advisory narrative only; model={MODEL_ID}; unavailable, "
+            f"no summary produced; {summary}; no impact on routing, eligibility, "
+            f"or execution")
 
     # Propose resolution — Category A (irreversible): halt for human.
     proposal = {

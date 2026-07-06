@@ -7,7 +7,7 @@ agents for regulated workflows: every decision logged, every guardrail a
 mechanism, every irreversible action gated behind a human.
 
 **Read the trace first:** open [`trace.html`](trace.html) — it renders the
-unedited decision log from a real run and annotates the three things worth
+unedited decision log from a real run and annotates the things worth
 checking. Under 60 seconds.
 
 ## What the run proves
@@ -27,6 +27,14 @@ checking. Under 60 seconds.
    [`ratify.py`](ratify.py), records the human decision, and only then does
    execution run. In this run, 68 seconds elapsed between the agent's HALT
    and the human's APPROVE — the agent process was dead while a human decided.
+4. **The log records what actually happened, including failures.** The one
+   advisory model call can be unavailable (CLI missing, not authenticated,
+   timed out). When that happens the agent doesn't crash and it doesn't
+   pretend: it logs `MODEL_CONSULT_SUMMARY :: SUMMARY_SKIPPED` with the
+   reason, and continues — because routing, eligibility, and execution never
+   depended on the model. A run where the summary succeeds logs
+   `SUMMARY_RECORDED` instead. The append-only log never claims a summary was
+   recorded when it wasn't.
 
 The model (used once, for a narrative summary only) has no routing,
 approval, or execution authority. That's the point.
@@ -47,10 +55,11 @@ approval, or execution authority. That's the point.
   framework, no infrastructure, nothing to `pip install`.
 - **[Claude Code](https://docs.claude.com/en/docs/claude-code) installed and
   authenticated**, with `claude` on PATH — used for exactly one call: the
-  narrative case-file summary. If it's missing, `agent.py` still runs to
-  completion and prints why the summary step was skipped; every guardrail,
-  routing, and ratification decision is a plain code branch and does not
-  depend on the model being available. That's the design, not a fallback.
+  narrative case-file summary. If it's missing, unauthenticated, or times out,
+  `agent.py` still runs to completion, logs the summary step as
+  `SUMMARY_SKIPPED` with the reason, and continues; every guardrail, routing,
+  and ratification decision is a plain code branch and does not depend on the
+  model being available. That's the design, not a fallback.
 
 ## Run it yourself
 
