@@ -1,0 +1,17 @@
+{
+  "name": "throughput-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Adapter that fronts a slow, sync-only third-party REST API: adaptive concurrency, circuit breaking, safe retries, caching and request collapsing.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test --test-timeout=60000",
+    "test:watch": "node --test --watch --test-timeout=60000"
+  },
+  "dependencies": {
+    "undici": "^7.0.0"
+  }
+}
