@@ -1,0 +1,17 @@
+{
+  "name": "harness-validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Executable validation of the AI Agent Code Generation Harness design document.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "probe": "tsx test/run-probes.ts"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@types/node": "^22.20.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
