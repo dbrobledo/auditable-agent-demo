@@ -1,0 +1,60 @@
+{
+  "name": "auditable-tdd-harness",
+  "version": "1.0.0",
+  "description": "An AI coding agent harness whose green runs mean something: pinned test specs, enforced RED phase, bounded execution, and an append-only decision log.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "bin": {
+    "tdd-harness": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test --import tsx test/unit.test.ts test/defect-regression.test.ts",
+    "regression": "node --test --import tsx test/defect-regression.test.ts",
+    "demo": "tsx examples/demo.ts",
+    "prepublishOnly": "npm run typecheck && npm run build && npm test",
+    "stress": "node --test --import tsx test/stress.test.ts"
+  },
+  "keywords": [
+    "llm",
+    "agent",
+    "tdd",
+    "sandbox",
+    "e2b",
+    "mcp",
+    "qwen",
+    "ollama",
+    "audit"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "e2b": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "e2b": {
+      "optional": true
+    }
+  }
+}
